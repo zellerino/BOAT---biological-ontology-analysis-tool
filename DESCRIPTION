@@ -1,0 +1,10 @@
+Package: OAT
+Title: Ontology Analysis and Visualization tool
+Version: 0.0.0.9000
+Authors@R: person("Ivo", "Zeller", email = "ivozeller@gmail.com", role = c("aut", "cre"))
+Description: Tool for analysing ontology term enrichment and depletion over several stages/conditions/samples 
+Depends: R (>= 3.3.1)
+License: This GNU thing
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1.9000
