@@ -1,8 +1,10 @@
-
-
+#' @import GO.db
+#' @import GSEABase
+#' @import org.Dm.eg.db
+#' @import hash  
+#' @export
 #' @title Function to Count the Number of Genes with an Annotation to  
 #' an Ontology Term for each Term within an Ontology.
-#'
 #' @description This function counts the number of genes that are associated 
 #' with each term 
 #' of a specified ontology within a given geneset. Furthermore it counts the 
@@ -42,7 +44,7 @@ term_2_gene_count <- function(geneset,
 
 # gets panther go slim ids from obo file format
 Panther_GO_Slim <- 
-  getOBOCollection("http://data.pantherdb.org/PANTHER11.1/ontology/PANTHERGOslim.obo")@ids 
+  GSEABase::getOBOCollection("http://data.pantherdb.org/PANTHER11.1/ontology/PANTHERGOslim.obo")@ids 
   
 # functions to remove NULL objects from list of lists ==========================
 is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
@@ -54,19 +56,19 @@ rmNullObs <- function(x) {
 #===============================================================================
 
 # retrieves entrez ids that are required for mapping to goids    
-EIDsgen <- unlist(mget(geneset, org.Dm.egFLYBASE2EG, ifnotfound = NA)) 
+EIDsgen <- unlist(AnnotationDbi::mget(geneset, org.Dm.egFLYBASE2EG, ifnotfound = NA)) 
     
 if (modus == "GO"){
 # character vecors of all GOIDs in respective categories; used to find 
 #characterized genes
 ## "GO:0008150" is term "BP"
-  BP_terms <- c(as.list(GO.db::GOBPOFFSPRING)[["GO:0008150"]], "GO:0008150")  
-  MF_terms <- c(as.list(GO.db::GOMFOFFSPRING)[["GO:0003674"]], "GO:0003674")  
-  CC_terms <- c(as.list(GO.db::GOCCOFFSPRING)[["GO:0005575"]], "GO:0005575")  
+  BP_terms <- c(AnnotationDbi::as.list(GO.db::GOBPOFFSPRING)[["GO:0008150"]], "GO:0008150")  
+  MF_terms <- c(AnnotationDbi::as.list(GO.db::GOMFOFFSPRING)[["GO:0003674"]], "GO:0003674")  
+  CC_terms <- c(AnnotationDbi::as.list(GO.db::GOCCOFFSPRING)[["GO:0005575"]], "GO:0005575")  
       
 #' map ezids to goids; no NAs in input allowed;  output is list of lists
 #' with evidence source information and other information
-  GOIDsgen_ann <- mget(EIDsgen[!is.na(EIDsgen)], org.Dm.egGO, ifnotfound = NA)
+  GOIDsgen_ann <- AnnotationDbi::mget(EIDsgen[!is.na(EIDsgen)], org.Dm.egGO, ifnotfound = NA)
    
       
 #' make list of GO_IDs for every Entrez_ids -> list of lists
@@ -98,10 +100,10 @@ if (modus == "GO"){
     GOIDsgen <- GO_term_list_BP
     
     
-    ancestor_hash <- hash(as.list(GO.db::GOBPANCESTOR)) #  produce lookup table
+    ancestor_hash <- hash(AnnotationDbi::as.list(GO.db::GOBPANCESTOR)) #  produce lookup table
     my_keys = hash::keys(ancestor_hash)
     helper.list <- lapply(GO_term_list_BP, function(x) ancestor_hash[x])
-    helper.list = lapply(helper.list, as.list)
+    helper.list = lapply(helper.list, AnnotationDbi::as.list)
     
     # puts list identifier in the list and removes replicate GOIDs
     GOIDsgen <- lapply(helper.list, function(x) unique(c(names(x), unlist(x)))) 
@@ -118,10 +120,10 @@ if (modus == "GO"){
     GO_term_list_MF <- GO_term_list_MF[lapply(GO_term_list_MF,length)>0]  # removes empty lists
     GOIDsgen <- GO_term_list_MF
     
-    ancestor_hash <- hash(as.list(GO.db::GOMFANCESTOR)) #  produce lookup table
+    ancestor_hash <- hash(AnnotationDbi::as.list(GO.db::GOMFANCESTOR)) #  produce lookup table
     my_keys = hash::keys(ancestor_hash)
     helper.list <- lapply(GO_term_list_MF, function(x) ancestor_hash[x])
-    helper.list = lapply(helper.list, as.list)
+    helper.list = lapply(helper.list, AnnotationDbi::as.list)
     
     # puts list identifier in the list and removes replicate goids
     GOIDsgen <- lapply(helper.list, function (x) unique(c(names(x), unlist(x))))
@@ -137,10 +139,10 @@ if (modus == "GO"){
     GO_term_list_CC <- GO_term_list_CC[lapply(GO_term_list_CC,length)>0]  # removes empty lists
     GOIDsgen <- GO_term_list_CC
     
-    ancestor_hash <- hash(as.list(GO.db::GOCCANCESTOR)) #  produce lookup table
+    ancestor_hash <- hash(AnnotationDbi::as.list(GO.db::GOCCANCESTOR)) #  produce lookup table
     my_keys = hash::keys(ancestor_hash)
     helper.list <- lapply(GO_term_list_CC, function(x) ancestor_hash[x])
-    helper.list = lapply(helper.list, as.list)
+    helper.list = lapply(helper.list, AnnotationDbi::as.list)
     
     # puts list identifier in the list and removes replicate goids
     GOIDsgen <- lapply(helper.list, function (x) unique(c(names(x), unlist(x))))
@@ -150,7 +152,7 @@ if (modus == "GO"){
   GOIDsgen <- lapply(GOIDsgen, function (x) x[which(x != "all")] )  # removes annoying 
                                                            # "all" entries that
                                                            # cannot be passed to
-                                                           # mget, "all" 
+                                                           # AnnotationDbi::mget, "all" 
                                                            # probably marks
                 # genes that can be assigned to a gene ontology category but not to a specific term.
                                                                     
@@ -209,7 +211,7 @@ if (modus == "GO"){
   }
 
   else if (modus == "KEGG"){
-    keggPaths <-  mget(EIDsgen, org.Dm.egPATH, ifnotfound = NULL)  # the mapping is present and
+    keggPaths <-  AnnotationDbi::mget(EIDsgen, org.Dm.egPATH, ifnotfound = NULL)  # the mapping is present and
                                                                    # so this can be as well used for enrichment analysis
                                                                    # but it has to be implemented yet
                                                                 
@@ -233,8 +235,7 @@ return(parameter_counts)
 
 
 
-
-                 
+#' @export                
 #' @title Testing for Enrichment and Depletion of Ontology Terms in a Geneset
 #' @description \code{term_2_gene_count}  tests for enrichment or depletion of
 #' ontology term as compared to randomly sample a set of genes in the reference
@@ -303,7 +304,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   ### assign gene ontology category("BP", "CC", "MF") to each GO_ID in tabk and add col #########
   if(modus=="GO"){
-  tabks$GO_categories <- sapply(mget(tabks$ID, GO.db::GOTERM, ifnotfound = NA),
+  tabks$GO_categories <- sapply(AnnotationDbi::mget(tabks$ID, GO.db::GOTERM, ifnotfound = NA),
                                 function(x) x@Ontology)
   
   }
@@ -403,7 +404,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
        tabks$padj <- p.adjust(tabks$twosidepval, method = multCorrect, n = numtests)
        
        
-       tabks$TERM <- as.character(sapply(mget(tabks$ID, GO.db::GOTERM,
+       tabks$TERM <- as.character(sapply(AnnotationDbi::mget(tabks$ID, GO.db::GOTERM,
                                               ifnotfound = NA),
                                               function(x) x@Term))
        
@@ -451,8 +452,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
 
 
 
-
-
+#'@export
 #'@title Prune the GO Graph Beginning from the Roots
 #'@description The \code{cut_GO()} function takes a character vector of GOIDS as
 #'input and removes the terms to a specified level in the DAG.
@@ -472,7 +472,7 @@ cut_GO <- function(GOids, level = 2, startingnodes=c("GO:0008150","GO:0003674","
   for (i in seq_len(level-1)){
     whole[[i]] <- startingnodes
     
-    startingnodes <- c(unlist(mget(startingnodes, GO.db::GOBPCHILDREN, ifnotfound = NA)), unlist(mget(startingnodes, GO.db::GOMFCHILDREN, ifnotfound = NA)),  unlist(mget(startingnodes, GO.db::GOCCCHILDREN, ifnotfound = NA)))[!is.na(c(unlist(mget(startingnodes, GO.db::GOBPCHILDREN, ifnotfound = NA)), unlist(mget(startingnodes, GO.db::GOMFCHILDREN, ifnotfound = NA)),  unlist(mget(startingnodes, GO.db::GOCCCHILDREN, ifnotfound = NA))))]
+    startingnodes <- c(unlist(AnnotationDbi::mget(startingnodes, GO.db::GOBPCHILDREN, ifnotfound = NA)), unlist(AnnotationDbi::mget(startingnodes, GO.db::GOMFCHILDREN, ifnotfound = NA)),  unlist(AnnotationDbi::mget(startingnodes, GO.db::GOCCCHILDREN, ifnotfound = NA)))[!is.na(c(unlist(AnnotationDbi::mget(startingnodes, GO.db::GOBPCHILDREN, ifnotfound = NA)), unlist(AnnotationDbi::mget(startingnodes, GO.db::GOMFCHILDREN, ifnotfound = NA)),  unlist(AnnotationDbi::mget(startingnodes, GO.db::GOCCCHILDREN, ifnotfound = NA))))]
     
     
   }
@@ -483,8 +483,8 @@ cut_GO <- function(GOids, level = 2, startingnodes=c("GO:0008150","GO:0003674","
 }
 
 
-                                
-
+                              
+#' @export
 #' @title  Merge the dataframes of different stages and cut out general GO 
 #' terms
 #' @description \code{merge_n_clean()} takes the the data output of 
@@ -542,7 +542,7 @@ merge_n_clean <- function(...,
   
   
   sumpval <- base::sort(sumpval, decreasing =TRUE)
-  term_order <- unname(unlist(lapply(mget(names(sumpval), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
+  term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(sumpval), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
   }
   
   else if(sort_by == "variance"){
@@ -562,7 +562,7 @@ merge_n_clean <- function(...,
     
     
     variance <- base::sort(variance, decreasing =TRUE)
-    term_order <- unname(unlist(lapply(mget(names(variance), GO.db::GOTERM), function(x) x@Term))) 
+    term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(variance), GO.db::GOTERM), function(x) x@Term))) 
     
     
   }
