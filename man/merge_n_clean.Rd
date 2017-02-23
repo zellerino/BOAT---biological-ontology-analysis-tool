@@ -5,12 +5,12 @@
 \title{Merge the dataframes of different stages and cut out general GO 
 terms}
 \usage{
-merge_n_clean(..., cut_level = 2, pval = 0.01, sort_by = "pvalSum",
-  mode = "GO")
+merge_n_clean(diff_stage_tables, cut_level = 2, pval = 0.01,
+  sort_by = "pvalSum", mode = "GO")
 }
 \arguments{
-\item{...}{put in dataframes obtained by \code{term_enrichment()} for several
-stages}
+\item{diff_stage_tables}{put in dataframes obtained by \code{term_enrichment} for several
+stages as list}
 
 \item{cut_level}{up to which level starting from the root the terms should 
 be deleted ? Defaults to 2.}
@@ -19,6 +19,8 @@ be deleted ? Defaults to 2.}
 default is "pvalSum" and it sorts the terms according to the sum of p-values
 over the different stages. The second option is "variance" which sorts the 
 terms according to the biggest spread in p-values over the stages.}
+
+\item{mode}{"GO", "PANTHER" or "KEGG"}
 }
 \value{
 The output is a list of two items.\cr

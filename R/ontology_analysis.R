@@ -41,7 +41,7 @@ term_2_gene_count <- function(geneset,
                             category ="BP",
                             GO_slim = FALSE
                             ){ 
-
+PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY" #  sets panther.db to fly
 # gets panther go slim ids from obo file format
 Panther_GO_Slim <- 
   GSEABase::getOBOCollection("http://data.pantherdb.org/PANTHER11.1/ontology/PANTHERGOslim.obo")@ids 
@@ -159,7 +159,7 @@ if (modus == "GO"){
   
   # that function I found late it reverses the mapping from gene_to_ids to
   # to id_to_genes
-  genes_4_ID <- reverseSplit(GOIDsgen)
+  genes_4_ID <- Biobase::reverseSplit(GOIDsgen)
   
   # table of goids with respective number of genes that are annotated to it
   # here the counting happens; lapply(genes_4_ID, length) would give the same
@@ -191,10 +191,10 @@ if (modus == "GO"){
     # maps entrez ids with removed NAs to Panther Pathways and removes EZs with no annotation  
     Path_IDs <- na.omit(PANTHER.db::select(PANTHER.db, EIDsgen[!is.na(EIDsgen)],
                                            "PATHWAY_ID", "ENTREZ")) 
-    # makes a list of lists with Entrez_ID as identifier and sublist content the assigned Pathway ids
+    # makes a list of  with Entrez_ID as identifier and content the assigned Pathway ids
     Path_IDs <- lapply(split(Path_IDs, Path_IDs$ENTREZ), function(x) x$PATHWAY_ID) 
     
-    genes_4_ID <- reverseSplit(Path_IDs)
+    genes_4_ID <- Biobase::reverseSplit(Path_IDs)
     
     # table with pathway ids with respective number of gene annotations to it
     countgen <- as.data.frame(table(factor(unlist(Path_IDs))))  
@@ -202,8 +202,7 @@ if (modus == "GO"){
     names(countgen) <- c("ID", "number_of_genes_with_annotation")
     
     
-    
-     chargenes <-length(Path_IDs) # this would only count the number
+    chargenes <-length(Path_IDs) # this would only count the number
             #genes that are characterized by panther pathway which is very few
             #and therefore maybe to strict?, too pessimistic?
     
@@ -211,11 +210,14 @@ if (modus == "GO"){
   }
 
   else if (modus == "KEGG"){
-    keggPaths <-  AnnotationDbi::mget(EIDsgen, org.Dm.egPATH, ifnotfound = NULL)  # the mapping is present and
-                                                                   # so this can be as well used for enrichment analysis
-                                                                   # but it has to be implemented yet
-                                                                
+    keggPaths <-  AnnotationDbi::mget(EIDsgen[!is.na(EIDsgen)], org.Dm.egPATH, ifnotfound = NA)
+    keggPaths <- keggPaths[!is.na(keggPaths)] #remove entrez ids that do not have an annotation for pathway
+    genes_4_ID <- Biobase::reverseSplit(keggPaths) # list pathway IDs and the genes that are annotated to it
     
+    countgen <- as.data.frame(table(factor(unlist(keggPaths))))  # counts numbe rof annotations for every ID
+    names(countgen) <- c("ID", "number_of_genes_with_annotation") 
+    
+    chargenes <- length(keggPaths)
     
   }
     
@@ -246,7 +248,7 @@ return(parameter_counts)
 #' @param parameters_list_ref the list that is created by 
 #' \code{term_2_gene_count()} for your \emph{reference gene set}.
 #' @param stage specify name of experiment.
-#' @param modus "GO" or "PANTHER" analysis. Defaults to "GO".
+#' @param modus "GO", "KEGG" or "PANTHER" analysis. Defaults to "GO".
 #' @param twosidetest "midpval" or "simpledouble" according to PMID: 17182697.
 #' Default is "midpval".
 #' @param multCorrect "holm", "hochberg", "hommel", "bonferroni", "BH", "BY",
@@ -272,11 +274,12 @@ return(parameter_counts)
 term_enrichment <- function(parameters_list_exp, # contains parameters for experimental set
                             parameters_list_ref, # contains parameers for reference set
                             stage,    # number of experimental stage
-                            modus = "GO", # "GO" or "PANTHER" analysis
+                            modus = "GO", # "GO" "KEPANTHER" analysis
                             twosidetest = "midpval",
                             multCorrect = "bonferroni"){ # "twoside "midpval" or "simpledouble"
                                                     # according to PMID: 17182697
-    
+  
+  PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY" #  sets panther.db to fly  
   N <- parameters_list_ref$num_char # num of characterized genes in refset   
   n <- parameters_list_exp$num_char # num of chararacterized (with annotation) genes in expset
   
@@ -386,8 +389,8 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   #========================================================================================================
   
   ##### add cols for p vals enriched and depleted
-   tabks$pvl_R <- ls_pval_enriched ## right tail P(X>=k)
-   tabks$pvl_L <- ls_pval_depleted ## left tail  P(X<=k)
+  tabks$pvl_R <- ls_pval_enriched ## right tail P(X>=k)
+  tabks$pvl_L <- ls_pval_depleted ## left tail  P(X<=k)
    
   ##### add col for two-sided test
   tabks$whichmin <- apply(tabks[,c("pvl_R","pvl_L")], 1, which.min)
@@ -439,11 +442,47 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
                                     -1* temp.tabks$twosided.logpval)
   temp.tabks$k_to_n_ratio <- tabks[, "k_n_ratio"]
   temp.tabks$kdivn        <- base::paste(tabks[, "k"],"/", parameters_list_exp$num_all, sep ="")
-  temp.tabks              <- rename(temp.tabks, c(PATHWAY_TERM="TERM"))
+  names(temp.tabks)[names(temp.tabks)=="PATHWAY_TERM"]   <-  "TERM"
+  names(temp.tabks)[names(temp.tabks)=="PATHWAY_ID"] <- "ID"
   temp.tabks$state        <- replicate(dim(temp.tabks)[1], num_exp)
   tabks                   <- temp.tabks
     
   }
+  
+  else if (modus == "KEGG"){
+  tabks$padj <- p.adjust(tabks$twosidepval, method = multCorrect, n = numtests)
+    
+  temp.ids  <-  sapply(tabks$ID, function(x) paste0('map', x))
+  
+  # split list because keggGet can take a vector of length 10
+  temp.ids  <-  base::split(temp.ids, ceiling(seq_along(unlist(tabks$ID))/10)) 
+
+  
+  
+  res <-  lapply(temp.ids, KEGGREST::keggGet) # gets a list of the kegg input
+  res2 <-  unlist(res, recursive = FALSE) # l
+  names(res2) <-  sapply(res2, function(x) x$ENTRY)
+  terms <-  lapply(res2, function(x) x$NAME)
+  
+  try(if(identical(names(res2), unname(unlist(temp.ids))) == FALSE) stop("there are gaps in the mapping between ID and term name, IDs originated from org.Dm.eg.db"))
+  tabks$TERM <- base::unname(base::unlist(terms))                                        
+                                      
+    
+  # marks enriched or depleted GOIDs
+  tabks$E_or_D <- factor(ifelse(tabks[ ,"whichmin"] == 1, "E","D")) 
+    
+  tabks$twosided.logpval <-  -log10(tabks[ ,"twosidepval"])
+    
+  # needed for ggplot scale_gradient
+  tabks$twosided.logpval <- ifelse(tabks$E_or_D=="E",
+                                     tabks$twosided.logpval,
+                                     -1* tabks$twosided.logpval)
+    
+  tabks$state <-  replicate(dim(tabks)[1], num_exp)
+  tabks <- rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
+  tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
+  }
+  
   
   return(tabks)
   
@@ -491,14 +530,15 @@ cut_GO <- function(GOids, level = 2, startingnodes=c("GO:0008150","GO:0003674","
 #' \code{term_enrichment()} for different stages, merges them, cuts out more
 #' general GO terms and subsets the merged tables by the GO terms that are 
 #' significantly enriched or depleted in any of the entered stages.
-#' @param ... put in dataframes obtained by \code{term_enrichment()} for several
-#' stages
+#' @param diff_stage_tables put in dataframes obtained by \code{term_enrichment} for several
+#' stages as list
 #' @param cut_level  up to which level starting from the root the terms should 
 #' be deleted ? Defaults to 2.
 #' @param sort_by how should the terms be sorted for the ggplot script ? The
 #' default is "pvalSum" and it sorts the terms according to the sum of p-values
 #' over the different stages. The second option is "variance" which sorts the 
 #' terms according to the biggest spread in p-values over the stages.
+#' @param mode "GO", "PANTHER" or "KEGG"
 #' @return The output is a list of two items.\cr
 #' The first item identified by "table_all_stages_sign_IDs" is a dataframe which
 #' contains all Ontology IDs that are significantly enriched or depleted in any
@@ -506,24 +546,24 @@ cut_GO <- function(GOids, level = 2, startingnodes=c("GO:0008150","GO:0003674","
 #' \cr
 #' The second item identified by "order_by_pval" specifies the order of terms 
 #' for the visualization in the ggplot script.
-merge_n_clean <- function(...,
+merge_n_clean <- function(diff_stage_tables,
                           cut_level = 2, # cutting general GO terms top down
                           pval  =  0.01, # desired pval threshold
                           sort_by = "pvalSum",
                           mode = "GO"){
   
-  diff_stage_tables <- list(...) # makes list of tables for diff stages
+  PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY"  # sets panther database to fly
   
   mergedTabs <- diff_stage_tables[[1]]
   for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
   
-  sig_GO_all_states <- unique(mergedTabs[mergedTabs$padj < 0.01, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
+  sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < 0.01, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
   
   if(mode == "GO"){
-  sig_GO_all_states <- cut_GO(sig_GO_all_states, level = cut_level) # trims away super general terms like "biological process"
+  sig_ID_all_states <- cut_GO(sig_ID_all_states, level = cut_level) # trims away super general terms like "biological process"
   }
   
-  tabs <- mergedTabs[mergedTabs$ID %in% sig_GO_all_states, ]
+  tabs <- mergedTabs[mergedTabs$ID %in% sig_ID_all_states, ]
   
   if(sort_by == "pvalSum"){
   
@@ -531,18 +571,40 @@ merge_n_clean <- function(...,
   names(sumpval) <- vector("character") 
   
   initz = 0
-  for (i in sig_GO_all_states) {
+  for (i in sig_ID_all_states) {
     
     initz = initz + 1
     
     sumpval[initz] <- sum(tabs[tabs$ID == i, "twosided.logpval"])
-    names(sumpval)[initz] <- i
+    names(sumpval)[initz] <- i # assign ID to pval
     
   }
   
-  
   sumpval <- base::sort(sumpval, decreasing =TRUE)
+  
+  if(mode == "GO"){
   term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(sumpval), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
+  }
+  
+  else if (mode == "PANTHER"){
+  term_order <- PANTHER.db::select(PANTHER.db::PANTHER.db, keys = names(sumpval), columns = "PATHWAY_TERM", keytype = "PATHWAY_ID")[,2]
+  }
+  
+  else if (mode == "KEGG"){
+    
+    ordered_ids <- base::split(names(sumpval), ceiling(seq_along(names(sumpval))/10)) # split ids for KEGGREST::keggGet
+    
+    ordered_ids <- sapply(ordered_ids, function(x) paste0('map', x))
+    
+    res <-  lapply(ordered_ids, KEGGREST::keggGet) # gets a list of the kegg input
+    res2 <-  unlist(res, recursive = FALSE) # l
+    names(res2) <-  sapply(res2, function(x) x$ENTRY)
+    terms <-  lapply(res2, function(x) x$NAME)
+
+    term_order <- base::unname(base::unlist(terms)) 
+    
+  }
+  
   }
   
   else if(sort_by == "variance"){
@@ -551,7 +613,7 @@ merge_n_clean <- function(...,
   names(variance) <- vector("character") 
     
     initz = 0
-    for (i in sig_GO_all_states) {
+    for (i in sig_ID_all_states) {
       
       initz = initz + 1
       
@@ -562,11 +624,28 @@ merge_n_clean <- function(...,
     
     
     variance <- base::sort(variance, decreasing =TRUE)
-    term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(variance), GO.db::GOTERM), function(x) x@Term))) 
     
+    if(mode == "GO"){
+    term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(variance), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
+    }
+    
+    else if (mode == "PANTHER"){
+    term_order <- PANTHER.db::select(PANTHER.db::PANTHER.db, keys = names(variance), columns = "PATHWAY_TERM", keytype = "PATHWAY_ID")[,2]
+    
+    }
+    
+    else if (mode == "KEGG"){
+      ordered_ids <- base::split(names(variance), ceiling(seq_along(names(variance))/10)) # split ids for keggget
+      ordered_ids <- sapply(ordered_ids, function(x) paste0('map', x))
+      
+      res <-  lapply(ordered_ids, KEGGREST::keggGet) # gets a list of the kegg input
+      res2 <-  unlist(res, recursive = FALSE) # l
+      names(res2) <-  sapply(res2, function(x) x$ENTRY)
+      terms <-  lapply(res2, function(x) x$NAME)
+      term_order <- base::unname(base::unlist(terms)) 
+    }
     
   }
-  
   
   output_list <- list(tabs, rev(term_order))
   names(output_list) <-  c("table_all_stages_sign_IDs", "order_by_pval")

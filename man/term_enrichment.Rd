@@ -17,7 +17,7 @@ down-regulated genes}
 
 \item{stage}{specify name of experiment.}
 
-\item{modus}{"GO" or "PANTHER" analysis. Defaults to "GO".}
+\item{modus}{"GO", "KEGG" or "PANTHER" analysis. Defaults to "GO".}
 
 \item{twosidetest}{"midpval" or "simpledouble" according to PMID: 17182697.
 Default is "midpval".}
