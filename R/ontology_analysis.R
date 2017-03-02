@@ -421,6 +421,11 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
                                     tabks$twosided.logpval,
                                     -1* tabks$twosided.logpval)
        
+       tabks$log.padj <- -log10(tabks$padj)
+       tabks$log.padj <- ifelse(tabks$E_or_D == "E",
+                                tabks$log.padj,
+                                -1* tabks$log.padj)
+       
        tabks$state <-  replicate(dim(tabks)[1], num_exp)
        tabks <- rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
        tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
@@ -435,11 +440,19 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   temp.tabks$padj <- p.adjust(tabks$twosidepval, method = multCorrect, n = numtests)
   
+ 
   temp.tabks$E_or_D <- factor(ifelse(tabks[, "whichmin"] == 1, "E","D"))
   temp.tabks$twosided.logpval <- -log10(tabks[, "twosidepval"])
   temp.tabks$twosided.logpval <- ifelse(temp.tabks$E_or_D == "E",
                                     temp.tabks$twosided.logpval,
                                     -1* temp.tabks$twosided.logpval)
+  
+  temp.tabks$log.padj <- -log10(temp.tabks$padj) 
+  temp.tabks$log.padj <- ifelse(temp.tabks$E_or_D == "E",
+                                temp.tabks$log.padj,
+                                -1* temp.tabks$log.padj)
+  
+   
   temp.tabks$k_to_n_ratio <- tabks[, "k_n_ratio"]
   temp.tabks$kdivn        <- base::paste(tabks[, "k"],"/", parameters_list_exp$num_all, sep ="")
   names(temp.tabks)[names(temp.tabks)=="PATHWAY_TERM"]   <-  "TERM"
@@ -467,9 +480,16 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   try(if(identical(names(res2), unname(unlist(temp.ids))) == FALSE) stop("there are gaps in the mapping between ID and term name, IDs originated from org.Dm.eg.db"))
   tabks$TERM <- base::unname(base::unlist(terms))                                        
                                       
-    
   # marks enriched or depleted GOIDs
   tabks$E_or_D <- factor(ifelse(tabks[ ,"whichmin"] == 1, "E","D")) 
+  
+  tabks$log.padj <- -log10(tabks$padj)
+  
+  tabks$log.padj <- ifelse(tabks$E_or_D == "E",
+                           tabks$log.padj,
+                           -1* tabks$log.padj) 
+    
+ 
     
   tabks$twosided.logpval <-  -log10(tabks[ ,"twosidepval"])
     
