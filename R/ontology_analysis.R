@@ -43,8 +43,7 @@ term_2_gene_count <- function(geneset,
                             ){ 
 PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY" #  sets panther.db to fly
 # gets panther go slim ids from obo file format
-Panther_GO_Slim <- 
-  GSEABase::getOBOCollection("http://data.pantherdb.org/PANTHER11.1/ontology/PANTHERGOslim.obo")@ids 
+
   
 # functions to remove NULL objects from list of lists ==========================
 is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
