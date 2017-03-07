@@ -320,7 +320,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   for (i in tabks$ID){ #=============================================================================================================
     # statistical heart of the function; for every GOID the twosided pvalue is
-    # calculated from geometric distribution using folowing parameters
+    # calculated from the hypergeometric distribution using folowing parameters
     # k = #genes in expset with annotation to the specified GOID
     # m = #genes in refset with annotation to the specified GOID
     # N = #allgenes in reference set that are characterized meaning they have some annotation to a GOID
@@ -399,6 +399,10 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   # add col for k to n(all genes characterized and not characterized) ratio
   tabks$k_n_ratio <- unlist(lapply(tabks$k, function(x) x/parameters_list_exp$num_all))  # unlist to make it numeric vector
+  
+  # add cols for m to N ratio as string(1st line) and percentage(2nd line)
+  tabks$mdivN <- base::paste(tabks[, "m"],"/", parameters_list_ref$num_all, sep ="")
+  tabks$m_to_N_ratio <- unlist(lapply(tabks$m, function(x) x/parameters_list_ref$num_all))
   
   if (modus == "GO"){
     
@@ -557,7 +561,9 @@ cut_GO <- function(GOids, level = 2, startingnodes=c("GO:0008150","GO:0003674","
 #' default is "pvalSum" and it sorts the terms according to the sum of p-values
 #' over the different stages. The second option is "variance" which sorts the 
 #' terms according to the biggest spread in p-values over the stages.
-#' @param mode "GO", "PANTHER" or "KEGG"
+#' @param modus "GO", "PANTHER" or "KEGG"
+#' @param show_enrich_only If set to TRUE, TERMs that are depleted over all
+#' stages are ingnored for the output. Defaults to TRUE.
 #' @return The output is a list of two items.\cr
 #' The first item identified by "table_all_stages_sign_IDs" is a dataframe which
 #' contains all Ontology IDs that are significantly enriched or depleted in any
@@ -569,16 +575,19 @@ merge_n_clean <- function(diff_stage_tables,
                           cut_level = 2, # cutting general GO terms top down
                           pval  =  0.01, # desired pval threshold
                           sort_by = "pvalSum",
-                          mode = "GO"){
+                          modus = "GO",
+                          show_enrich_only = TRUE){
   
   PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY"  # sets panther database to fly
   
   mergedTabs <- diff_stage_tables[[1]]
-  for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
   
+  if (length(diff_stage_tables)>1)){ # if statement makes it possible to pass a single table to function
+  for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
+  }
   sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < pval, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
   
-  if(mode == "GO"){
+  if(modus == "GO"){
   sig_ID_all_states <- cut_GO(sig_ID_all_states, level = cut_level) # trims away super general terms like "biological process"
   }
   
@@ -601,15 +610,15 @@ merge_n_clean <- function(diff_stage_tables,
   
   sumpval <- base::sort(sumpval, decreasing =TRUE)
   
-  if(mode == "GO"){
+  if(modus == "GO"){
   term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(sumpval), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
   }
   
-  else if (mode == "PANTHER"){
+  else if (modus == "PANTHER"){
   term_order <- PANTHER.db::select(PANTHER.db::PANTHER.db, keys = names(sumpval), columns = "PATHWAY_TERM", keytype = "PATHWAY_ID")[,2]
   }
   
-  else if (mode == "KEGG"){
+  else if (modus == "KEGG"){
     
     ordered_ids <- base::split(names(sumpval), ceiling(seq_along(names(sumpval))/10)) # split ids for KEGGREST::keggGet
     
@@ -644,16 +653,16 @@ merge_n_clean <- function(diff_stage_tables,
     
     variance <- base::sort(variance, decreasing =TRUE)
     
-    if(mode == "GO"){
+    if(modus == "GO"){
     term_order <- unname(unlist(lapply(AnnotationDbi::mget(names(variance), GO.db::GOTERM), function(x) x@Term)))   # order of terms for ggplot; defined in scale_x_discrete
     }
     
-    else if (mode == "PANTHER"){
+    else if (modus == "PANTHER"){
     term_order <- PANTHER.db::select(PANTHER.db::PANTHER.db, keys = names(variance), columns = "PATHWAY_TERM", keytype = "PATHWAY_ID")[,2]
     
     }
     
-    else if (mode == "KEGG"){
+    else if (modus == "KEGG"){
       ordered_ids <- base::split(names(variance), ceiling(seq_along(names(variance))/10)) # split ids for keggget
       ordered_ids <- sapply(ordered_ids, function(x) paste0('map', x))
       
@@ -665,7 +674,24 @@ merge_n_clean <- function(diff_stage_tables,
     }
     
   }
-  
+  # code to remove terms that are depleted in all stages because it maybe hard
+  # to interpret, most probable the terms are associated with housekeeping genes
+  begin <- 0  #-------------------------------------------------------------------
+  term.keep <- vector(mode="character")
+  if (show_enrich_only){
+    for (i in term_order){
+      
+      if (!all(tabs[tabs$TERM ==i,  "E_or_D"] == "D")){
+        begin <-  begin +1
+        term.keep[begin] <- i
+      }
+    }
+    
+    tabs <-  tabs[tabs$TERM %in% term.keep, ]
+    term_order <- term_order[term_order %in% term.keep]
+    
+  }
+  #---------------------------------------------------------------------------
   output_list <- list(tabs, rev(term_order))
   names(output_list) <-  c("table_all_stages_sign_IDs", "order_by_pval")
   return(output_list)
