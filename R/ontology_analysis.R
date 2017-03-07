@@ -576,7 +576,7 @@ merge_n_clean <- function(diff_stage_tables,
   mergedTabs <- diff_stage_tables[[1]]
   for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
   
-  sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < 0.01, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
+  sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < pval, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
   
   if(mode == "GO"){
   sig_ID_all_states <- cut_GO(sig_ID_all_states, level = cut_level) # trims away super general terms like "biological process"
