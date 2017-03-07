@@ -583,7 +583,7 @@ merge_n_clean <- function(diff_stage_tables,
   mergedTabs <- diff_stage_tables[[1]]
   
 
-  if (length(diff_stage_tables)>1)){ # if statement makes it possible to pass a single table to function
+  if (length(diff_stage_tables)>1){ # if statement makes it possible to pass a single table to function
   for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
   }
 
