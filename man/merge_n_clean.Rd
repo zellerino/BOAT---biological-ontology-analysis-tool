@@ -6,7 +6,7 @@
 terms}
 \usage{
 merge_n_clean(diff_stage_tables, cut_level = 2, pval = 0.01,
-  sort_by = "pvalSum", mode = "GO")
+  sort_by = "pvalSum", modus = "GO", show_enrich_only = TRUE)
 }
 \arguments{
 \item{diff_stage_tables}{put in dataframes obtained by \code{term_enrichment} for several
@@ -20,7 +20,10 @@ default is "pvalSum" and it sorts the terms according to the sum of p-values
 over the different stages. The second option is "variance" which sorts the 
 terms according to the biggest spread in p-values over the stages.}
 
-\item{mode}{"GO", "PANTHER" or "KEGG"}
+\item{modus}{"GO", "PANTHER" or "KEGG"}
+
+\item{show_enrich_only}{If set to TRUE, TERMs that are depleted over all
+stages are ingnored for the output. Defaults to TRUE.}
 }
 \value{
 The output is a list of two items.\cr
