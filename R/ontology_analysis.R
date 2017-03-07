@@ -576,6 +576,8 @@ merge_n_clean <- function(diff_stage_tables,
   mergedTabs <- diff_stage_tables[[1]]
   for (i in 2:length(diff_stage_tables)) mergedTabs <- rbind(mergedTabs, diff_stage_tables[[i]])
   
+  if(!any(mergedTabs$padj < pval)) return(NULL) #FIXME extremely ugly solution to prevent going on if there are no significant terms.
+
   sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < pval, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
   
   if(mode == "GO"){
