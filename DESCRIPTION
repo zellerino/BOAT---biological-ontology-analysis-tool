@@ -4,7 +4,8 @@ Version: 0.0.0.9000
 Authors@R: person("Ivo", "Zeller", email = "ivozeller@gmail.com", role = c("aut", "cre"))
 Description: Tool for analysing ontology term enrichment and depletion over several stages 
 Depends:
-	R (>= 3.3.0)
+	R (>= 3.3.0),
+    PANTHER.db
 License: This GNU thing
 Encoding: UTF-8
 LazyData: true
