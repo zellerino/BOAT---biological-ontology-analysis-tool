@@ -587,6 +587,8 @@ merge_n_clean <- function(diff_stage_tables,
   }
   sig_ID_all_states <- unique(mergedTabs[mergedTabs$padj < pval, "ID"])  # significant go terms from all different states ; --> cut out general terms with the cut_go function
   
+  if(!any(mergedTabs$padj < pval)) return(NULL) #FIXME extremely ugly solution to prevent going on if there are no significant terms.
+  
   if(modus == "GO"){
   sig_ID_all_states <- cut_GO(sig_ID_all_states, level = cut_level) # trims away super general terms like "biological process"
   }
