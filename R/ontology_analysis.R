@@ -437,7 +437,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   else if (modus =="PANTHER"){
     
-  temp.tabks <- select(PANTHER.db, tabks[ ,"ID"],"PATHWAY_TERM", "PATHWAY_ID")
+  temp.tabks <- PANTHER.db::select(PANTHER.db, tabks[ ,"ID"],"PATHWAY_TERM", "PATHWAY_ID")
 
   temp.tabks <-  temp.tabks[order(temp.tabks["PATHWAY_ID"]),] # order by pathway id
   
