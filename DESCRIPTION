@@ -1,6 +1,6 @@
 Package: OAT
 Title: Ontology Analysis and Visualization tool
-Version: 0.0.0.9000
+Version: 0.0.0.901
 Authors@R: person("Ivo", "Zeller", email = "ivozeller@gmail.com", role = c("aut", "cre"))
 Description: Tool for analysing ontology term enrichment and depletion over several stages 
 Depends:
@@ -15,4 +15,5 @@ Imports: GSEABase,
     PANTHER.db,
     org.Dm.eg.db,
     KEGGREST,
-    Biobase
+    Biobase,
+    S4Vectors

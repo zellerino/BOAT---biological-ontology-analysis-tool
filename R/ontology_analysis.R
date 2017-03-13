@@ -430,7 +430,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
                                 -1* tabks$log.padj)
        
        tabks$state <-  replicate(dim(tabks)[1], num_exp)
-       tabks <- rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
+       tabks <- S4Vectors::rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
        tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
        
    }
@@ -502,7 +502,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
                                      -1* tabks$twosided.logpval)
     
   tabks$state <-  replicate(dim(tabks)[1], num_exp)
-  tabks <- rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
+  tabks <- S4Vectors::rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
   tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
   }
   
