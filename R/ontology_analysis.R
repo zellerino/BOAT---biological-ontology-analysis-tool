@@ -399,10 +399,17 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   
   # add col for k to n(all genes characterized and not characterized) ratio
   tabks$k_n_ratio <- unlist(lapply(tabks$k, function(x) x/parameters_list_exp$num_all))  # unlist to make it numeric vector
-  
+  tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
   # add cols for m to N ratio as string(1st line) and percentage(2nd line)
   tabks$mdivN <- base::paste(tabks[, "m"],"/", parameters_list_ref$num_all, sep ="")
   tabks$m_to_N_ratio <- unlist(lapply(tabks$m, function(x) x/parameters_list_ref$num_all))
+  
+  # add cols for k to m (overlap) ratio
+  tabks$kdivm <- base::paste(tabks[, "k"], "/", tabks[, "m"], sep="")
+  tabks$k_to_m_ratio <- tabks$k/tabks$m
+  
+  
+  
   
   if (modus == "GO"){
     
@@ -431,7 +438,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
        
        tabks$state <-  replicate(dim(tabks)[1], num_exp)
        tabks <- S4Vectors::rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
-       tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
+       
        
    }
   
@@ -461,6 +468,7 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
   names(temp.tabks)[names(temp.tabks)=="PATHWAY_TERM"]   <-  "TERM"
   names(temp.tabks)[names(temp.tabks)=="PATHWAY_ID"] <- "ID"
   temp.tabks$state        <- replicate(dim(temp.tabks)[1], num_exp)
+  temp.tabks              <- cbind(temp.tabks, tabks[, c("k", "m", "m_to_N_ratio", "mdivN", "kdivm", "k_to_m_ratio" ) ]) # add cols from tabks here
   tabks                   <- temp.tabks
     
   }
@@ -503,7 +511,8 @@ term_enrichment <- function(parameters_list_exp, # contains parameters for exper
     
   tabks$state <-  replicate(dim(tabks)[1], num_exp)
   tabks <- S4Vectors::rename(tabks, c(k_n_ratio="k_to_n_ratio")) 
-  tabks$kdivn <-  base::paste(tabks[ ,"k"], "/", parameters_list_exp$num_all, sep="")
+  
+  
   }
   
   
