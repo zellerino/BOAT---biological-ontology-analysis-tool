@@ -225,8 +225,8 @@ if (modus == "GO"){
 numbAll <- length(geneset)
   
 # Return outputList: contains table with GO_ID and number 
-parameter_counts <- list(countgen, chargenes, numbAll, genes_4_ID)
-names(parameter_counts) <-  c("countTable", "num_char", "num_all", "gen_annot_2_ID")
+parameter_counts <- list(countgen, chargenes, numbAll, genes_4_ID, EIDsgen)
+names(parameter_counts) <-  c("countTable", "num_char", "num_all", "gen_annot_2_ID", "gene_mappings")
 
 
 return(parameter_counts)
