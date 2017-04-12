@@ -696,7 +696,7 @@ merge_n_clean <- function(diff_stage_tables,
   if (show_enrich_only){
     for (i in term_order){
       
-      if (!all(tabs[tabs$TERM ==i,  "log.padj"] <= 0)){
+      if (any(tabs[tabs$TERM ==i,  "log.padj"] >= -log10(pval))){
         begin <-  begin +1
         term.keep[begin] <- i
       }
