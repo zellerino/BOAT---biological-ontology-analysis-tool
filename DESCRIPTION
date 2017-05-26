@@ -6,7 +6,7 @@ Description: Tool for analysing ontology term enrichment and depletion over seve
 Depends:
 	R (>= 3.3.0),
     PANTHER.db
-License: This GNU thing
+License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1.9000

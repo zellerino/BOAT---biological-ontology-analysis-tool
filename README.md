@@ -1,2 +1,7 @@
-# My project's README
-README.md
+![boat](boat_logo.png)
+================================
+
+BOAT is a collaborative project to unify ontology analysis tools in biological research. 
+The vision is to create an easy-to-use exploratory data analysis tool in R for 
+of hiqh-throughput sequencing data with a strong emphasis on visualization.
+
