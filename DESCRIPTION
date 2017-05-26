@@ -1,4 +1,4 @@
-Package: OAT
+Package: BOAT
 Title: Ontology Analysis and Visualization tool
 Version: 0.0.0.901
 Authors@R: person("Ivo", "Zeller", email = "ivozeller@gmail.com", role = c("aut", "cre"))
