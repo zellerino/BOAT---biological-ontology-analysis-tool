@@ -1,4 +1,4 @@
-![boat](boat_logo.png)
+![boat](boat_logo.jpg)
 ================================
 
 BOAT should be a collaborative project to unify ontology analysis tools in biological research. 

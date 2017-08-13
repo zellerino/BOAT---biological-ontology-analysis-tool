@@ -17,7 +17,7 @@
 #' "BP".
 #' @param  GO_slim  logical. If TRUE, the function only uses PANTHER GO slim 
 #' terms. Defaults to FALSE.
-#' 
+#' @param species From which species is the experimental data?
 #' 
 #' @return \code{term_2_gene_count} returns a list of four elements.\cr 
 #' The first element identified by "countTable" is a dataframe containing a 
@@ -40,10 +40,24 @@ term_2_gene_count <- function(geneset,
                             modus ="GO",
                             category ="BP",
                             GO_slim = FALSE
+                            species = "Drosophila melanogaster"
                             ){ 
-PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY" #  sets panther.db to fly
-# gets panther go slim ids from obo file format
-
+  
+# set panther database to the correct species =================================  
+if (species == "Drosophila melanogaster")  {
+    PANTHER.db::pthOrganisms(PANTHER.db) <- "FLY" #  sets panther.db to fly
+}
+  
+else if (species == "Arabidopsis thaliana"){
+    PANTHER.db::pthOrganisms(PANTHER.db) <- "ARABIDOPSIS" #  sets panther.db to fly
+}
+  
+else if (species == "Caenorhabditis elegans"){
+    PANTHER.db::pthOrganisms(PANTHER.db) <- "WORM" #  sets panther.db to fly
+}    
+# there are still missing ones
+#===============================================================================
+  
   
 # functions to remove NULL objects from list of lists ==========================
 is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
@@ -54,8 +68,21 @@ rmNullObs <- function(x) {
   }                                                         
 #===============================================================================
 
-# retrieves entrez ids that are required for mapping to goids    
-EIDsgen <- unlist(AnnotationDbi::mget(geneset, org.Dm.egFLYBASE2EG, ifnotfound = NA)) 
+
+options(stringsAsFactors = FALSE) # strings from csv are not loaded as factors
+
+# links for annotation files from gene ontology locally stored as csv
+ann_links <- read.csv(file = "~/Desktop/gene_ontology_annotation_files.csv")   
+GAF_link <- ann_links[ann_links$Species==species,"Links"]  # fetch link for species
+
+# stream data from gene ontology website --> is always up-to-date
+con <- gzcon(url(as.character(GAF_link))) # gzcon puts decompression around the internet stream
+txt <- readLines(con)
+GAF_table<- read.delim(textConnection(txt), na.strings = "", header = FALSE, 
+                       comment.char = "!", sep = "\t")
+
+
+
     
 if (modus == "GO"){
 # character vecors of all GOIDs in respective categories; used to find 
